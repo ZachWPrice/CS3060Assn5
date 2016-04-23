@@ -170,39 +170,113 @@ void SJF(const vector<int>& arrivalTimes, const vector<int>& burstTimes){
 
 	//Print out the results
 	print(toPrint[0], toPrint[1], toPrint[2]);
-	return 0;
+	return;
 }
 
 void SRTF(const vector<int>& arrivalTimes, const vector<int>& burstTimes){
-	//Tested, below line is valid;
-	vector<int> remainTimes = burstTimes;
-	vector<int> arrivedProc;
-	vector<int> waitTimes;
-	vector<int> finishTimes;
-	vector<int> responseTimes;
-	int processCounter = arrivalTimes.size();
+
+	vector<int>at = arrivalTimes;
+	vector<int>bt = burstTimes;
+	vector<int>rt = burstTimes;
+	int processCount = at.size();
+	int avg[3] = { 0, 0, 0 };
 	int currTime = 0;
-	int currPro = 0;
-	int currBurst = 0;
-	
-	//This loop is to make sure EACH process COMPLETES
-	while (finishTimes.size() < processCounter) {
-		//Find the arrival time(s) that are first
-			//compare any that start at the same time shorter remaining goes until another process starts
-		//when anotehr process starts, need to re-analyze all arrived && non-completed (burstTimes[n] > 0) processes
-		// process with the shortest remaining burst time is then executed until process arrives
-		//repeat until all remaining times == 0
+	int cIndex = 0;
+	int nIndex = 0;
+	int counter = 0;
+	int changeTime = 0;
+	int smallRemain = 0;
+	bool check = true;
+	vector<int>::iterator current;
+	vector<int>::iterator next;
+
+	current = min_element(at.begin(), at.end());
+	currTime = *current;
+	while(check){
+		cIndex = distance(at.begin(), current);
+		if (*current != -1){
+			avg[0] += abs(currTime - arrivalTimes[cIndex]);
+		}
+		*current = -1;
+		smallRemain = -1;
+		counter = 0;
+
+		//Find the next one that is going to be processed
+		next = upper_bound(at.begin(), at.end(), 0);
+		if (next == at.end()){
+			if (upper_bound(rt.begin(), rt.end(), 0) == rt.end()){
+				check = false;
+				break;
+			}
+			else{
+				for (int i = 0; i < processCount; i++) {
+					if (smallRemain == -1 && rt[i] > 0)
+						smallRemain = i;
+					else if (rt[i] > 0 && rt[i] < rt[nIndex])
+						smallRemain = i;
+				}
+				if (smallRemain != -1){
+					next = at.begin() + smallRemain;
+				}
+			}
+		}
+		else{
+			if (currTime + rt[cIndex] <= *next){
+				for (int i = 0; i < processCount; i++){
+					if (at[i] == -1 && smallRemain == -1 && rt[i] > 0)
+						smallRemain = i;
+					else if (at[i] == -1 && rt[i] > 0 && rt[i] < smallRemain)
+						smallRemain = i;
+				}
+				if (smallRemain != -1){
+					next = at.begin() + smallRemain;
+				}
+			}
+		}
+		//we've found the next one we're going to process Finding the Index for it
+		nIndex = distance(at.begin(), next);
 
 
+		//We now need to find out how far the curr will process
+		if (*next == -1 || *next >= currTime + rt[cIndex]){
+			changeTime = rt[cIndex];
+			currTime += changeTime;
+		}
+		else if (*next < currTime + rt[cIndex] && *next != -1){
+			changeTime = abs(currTime - at[nIndex]);
+			currTime += changeTime;
+		}
+		else{
+			changeTime = rt[cIndex];
+			currTime = at[nIndex];
+		}
 
+		
+
+		if (changeTime - rt[cIndex] == 0)
+			avg[1] += abs(arrivalTimes[cIndex] - currTime);
+
+		for (int i = 0; i < processCount; i++){
+			if (at[i] == -1 && rt[i] > 0 && i != cIndex)
+				counter++;
+		}
+		avg[2] += changeTime * counter;
+
+		rt[cIndex] -= changeTime;
+		cout << cIndex << "  " << *next << "  " << avg[0] << "  " << avg[1] << "  " << avg[2] << endl;
+		current = next;
+		
 	}
-
-	return 0;
+	avg[0] /= processCount;
+	avg[1] /= processCount;
+	avg[2] /= processCount;
+	//Print out the results
+	print(avg[0], avg[1], avg[2]);
 }
 
-void *RR(const vector<int>& arrivalTimes, const vector<int>& burstTimes){
+void RR(const vector<int>& arrivalTimes, const vector<int>& burstTimes){
 
-	return 0;
+	return;
 }
 
 int main(int argc, char *argv[]) {
@@ -222,9 +296,9 @@ int main(int argc, char *argv[]) {
 		burstTimes.push_back(burst);
 	}
 
-	FCFS(arrivalTimes, burstTimes);
-	SJF(arrivalTimes, burstTimes);
-	//SRTF(arrivalTimes, burstTimes);
+	//FCFS(arrivalTimes, burstTimes);
+	//SJF(arrivalTimes, burstTimes);
+	SRTF(arrivalTimes, burstTimes);
 	//RR(arrivalTimes, burstTimes);
 
 	system("PAUSE");
